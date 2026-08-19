@@ -21,6 +21,37 @@ dresistmodel<-lme(
 
 anova(dresistmodel)
 
+aov_dres <- anova(dresistmodel) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("Term") %>%
+  rename(
+    numDF  = numDF,
+    denDF  = denDF,
+    `F-value` = `F-value`,
+    `p-value` = `p-value`
+  ) %>%
+  mutate(
+    `p-value` = case_when(
+      `p-value` < 0.001 ~ "<0.001",
+      TRUE ~ as.character(round(`p-value`, 3))
+    ),
+    `F-value` = round(`F-value`, 2)
+  )
+
+tab_dres <- aov_dres %>%
+  kbl(
+    caption = "Linear mixed-effects model ANOVA table for estimated resistance to duration treatment",
+    col.names = c("Fixed Effect", "num df", "den df", "F", "p"),
+    align = c("l", "c", "c", "c", "c"),
+    booktabs = TRUE   # clean lines for LaTeX/PDF
+  ) %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position"),
+    full_width = FALSE
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  save_kable("~/Masters/Growth_Chamber/results/tables/dur_resistance_anova.pdf")
+
 dd1resil <- lme(
   Day1_Resilience ~ Needle_age *Prev_trmt * Elev,
   random = ~ 1 | Seed_ID,
@@ -29,6 +60,37 @@ dd1resil <- lme(
 )
 
 anova(dd1resil)
+
+aov_dresil <- anova(dd1resil) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("Term") %>%
+  rename(
+    numDF  = numDF,
+    denDF  = denDF,
+    `F-value` = `F-value`,
+    `p-value` = `p-value`
+  ) %>%
+  mutate(
+    `p-value` = case_when(
+      `p-value` < 0.001 ~ "<0.001",
+      TRUE ~ as.character(round(`p-value`, 3))
+    ),
+    `F-value` = round(`F-value`, 2)
+  )
+
+tab_dresil <- aov_dresil %>%
+  kbl(
+    caption = "Linear mixed-effects model ANOVA table for estimated resilience to duration treatment",
+    col.names = c("Fixed Effect", "num df", "den df", "F", "p"),
+    align = c("l", "c", "c", "c", "c"),
+    booktabs = TRUE   # clean lines for LaTeX/PDF
+  ) %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position"),
+    full_width = FALSE
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  save_kable("~/Masters/Growth_Chamber/results/tables/dur_resilience_anova.pdf")
 
 dd7resil <- lme(
   Day7_Resilience ~ Needle_age * Prev_trmt * Elev,
@@ -43,9 +105,15 @@ anova(dd7resil)
 dresisemm <- emmeans(dresistmodel, ~  Needle_age * Prev_trmt * Elev)
 write.csv(dresisemm, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/dur_resisemm.csv", row.names=FALSE)
 
+View(contrast(dresisemm, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble())
 
 dd1resilemm <- emmeans(dd1resil, ~  Needle_age * Prev_trmt * Elev)
 write.csv(dd1resilemm, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/dur_d1resilemm.csv", row.names=FALSE)
+View(contrast(dd1resilemm, method = "pairwise") %>%
+       summary(infer = TRUE) %>%
+       as_tibble())
 
 dd7resilemm <- emmeans(dd7resil, ~  Needle_age * Prev_trmt * Elev)
 write.csv(dd7resilemm, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/dur_d7resilemm.csv", row.names=FALSE)
@@ -83,7 +151,9 @@ fit_curves_plot <- fit_curves_final %>%
   mutate(Elev_Micro = interaction(Elev, Micro, sep = ":"))
 
 mean_curves <- fit_curves_final %>%
-  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control","mod","high"), labels = c("control","moderate","high"))) %>%
+  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control","mod","high"), labels = c("Control","Moderate","High"))) %>%
+  mutate(Needle_age = factor(Needle_age, levels = c("new","old"), labels=c("Developing Foliage","Mature Foliage"))) %>%
+  mutate(Elev = factor(Elev, levels = c("low","high"), labels = c("Low Elevation", "High Elevation"))) %>%
   group_by(Needle_age, Prev_trmt, Elev, time) %>%
   summarise(
     meanfitted = mean(fitted, na.rm = TRUE),
@@ -92,7 +162,9 @@ mean_curves <- fit_curves_final %>%
   )
 
 control_ref <- dres$target_tab %>%
-  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control","mod","high"), labels = c("control","moderate","high"))) %>%
+  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control","mod","high"), labels = c("Control","Moderate","High"))) %>%
+  mutate(Needle_age = factor(Needle_age, levels = c("new","old"), labels=c("Developing Foliage","Mature Foliage"))) %>%
+  mutate(Elev = factor(Elev, levels = c("low","high"), labels = c("Low Elevation", "High Elevation"))) %>%
   distinct(Elev, Prev_trmt, Needle_age, target) 
 
 ggplot(mean_curves, aes(x = time, y = meanfitted, color = Elev_Micro, fill = Elev_Micro)) +
@@ -108,22 +180,26 @@ ggplot(mean_curves, aes(x = time, y = meanfitted, color = Elev_Micro, fill = Ele
   theme_bw(base_size = 13) +
   theme(strip.background = element_rect(fill = "grey90"), legend.position = "bottom")
 
-ggplot(mean_curves, aes(x = time, y = meanfitted, color = Prev_trmt, fill = Prev_trmt)) +
+rec_fig2 <- ggplot(mean_curves, aes(x = time, y = meanfitted, color = Prev_trmt, fill = Prev_trmt)) +
   geom_ribbon(aes(ymin = meanfitted - se_fitted, ymax = meanfitted + se_fitted),
               alpha = 0.15, color = NA) +
   geom_line(linewidth = 1) +
   geom_hline(data = control_ref, aes(yintercept = target, color = Prev_trmt),
              linetype = "dashed", linewidth = 0.7, show.legend = FALSE) + 
   facet_grid(Needle_age ~ Elev,
-             labeller = labeller(.rows = label_both, .cols = label_both)) +
-  labs(x = "Days since heat treatment", y = "Fv/Fm",
+             labeller = labeller(label_value)) +
+  labs(x = "Days Since Heat Treatment", y = "Fv/Fm",
        color = "Previous Treatment", fill = "Previous Treatment") +
-  scale_color_manual(values = c("high" = "red", "moderate" = "orange", "control" = "green")) +
-  scale_fill_manual(values = c("high" = "red", "moderate" = "orange", "control" = "green")) +
+  scale_color_manual(values = c("High" = "#A7144C", "Moderate" = "#D4AB7B", "Control" = "#21AF29")) +
+  scale_fill_manual(values = c("High" = "#A7144C", "Moderate" = "#D4AB7B", "Control" = "#21AF29")) +
   theme_bw(base_size = 13) +
   ylim(0,0.85) +
-  theme(strip.background = element_rect(fill = "grey90"), legend.position="bottom") +
-  ggsave("~/Masters/Growth_Chamber/results/figures/dur_response_recovery.png")
+  xlim(0,7)+
+  theme(strip.background = element_rect(fill = "grey90"), legend.position="bottom",
+        panel.grid.minor=element_blank())
+
+rec_fig2
+ggsave("dur_recovery_fig2.png", rec_fig2, path = "~/Masters/Growth_Chamber/results/figures")
 
 
 # Recovery metric models
@@ -146,7 +222,7 @@ dmod_day <- lme(
 
 anova(dmod_day)
 
-aov_tab <- anova(dmod_day) %>%
+aov_dtab <- anova(dmod_day) %>%
   as.data.frame() %>%
   tibble::rownames_to_column("Term") %>%
   rename(
@@ -163,7 +239,7 @@ aov_tab <- anova(dmod_day) %>%
     `F-value` = round(`F-value`, 2)
   )
 
-tab <- aov_tab %>%
+tabd <- aov_dtab %>%
   kbl(
     caption = "Linear mixed-effects model ANOVA table for estimated day of recovery",
     col.names = c("Fixed Effect", "num df", "den df", "F", "p"),
@@ -174,9 +250,10 @@ tab <- aov_tab %>%
     latex_options = c("striped", "hold_position"),
     full_width = FALSE
   ) %>%
-  row_spec(0, bold = TRUE)
+  row_spec(0, bold = TRUE) %>%
+  save_kable("~/Masters/Growth_Chamber/results/tables/dur_recovery_day_anova.pdf")
 
-tab
+tabd
 
 
 drec_rate <- lme(
@@ -188,7 +265,7 @@ drec_rate <- lme(
 
 anova(drec_rate)
 
-aov_tab2 <- anova(rec_rate) %>%
+aov_dtab2 <- anova(drec_rate) %>%
   as.data.frame() %>%
   tibble::rownames_to_column("Term") %>%
   rename(
@@ -205,7 +282,7 @@ aov_tab2 <- anova(rec_rate) %>%
     `F-value` = round(`F-value`, 2)
   )
 
-tab2 <- aov_tab2 %>%
+dtab2 <- aov_dtab2 %>%
   kbl(
     caption = "Linear mixed-effects model ANOVA table for estimated recovery rate coefficient",
     col.names = c("Fixed Effect", "num df", "den df", "F", "p"),
@@ -216,9 +293,9 @@ tab2 <- aov_tab2 %>%
     latex_options = c("striped", "hold_position"),
     full_width = FALSE
   ) %>%
-  row_spec(0, bold = TRUE)
+  row_spec(0, bold = TRUE) %>%
+  save_kable("~/Masters/Growth_Chamber/results/tables/dur_recovery_rate_anova.pdf")
 
-tab2
 
 
 # Emmeans analysis
@@ -231,9 +308,9 @@ write.csv(demm_rec_rate, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence
 
 
 # Pairwise contrasts
-contrast(demm_mod_day, method = "pairwise") %>%
+View(contrast(demm_rec_rate, method = "pairwise") %>%
   summary(infer = TRUE) %>%
-  as_tibble()
+  as_tibble())
 
 demm_mod_day_df <- demm_mod_day %>% as_tibble()
 

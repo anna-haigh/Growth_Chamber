@@ -29,6 +29,9 @@ head(flu)
 
 flu_sum <- flu %>%
   group_by(Needle_age, Elev, Micro, Measurement)%>%
+  mutate(Needle_age = factor(Needle_age, levels = c("new","old"), labels=c("Developing Foliage","Mature Foliage"))) %>%
+  mutate(Elev = factor(Elev, levels = c("low","high"), labels = c("Low Elevation", "High Elevation"))) %>%
+  mutate(Micro = factor(Micro, levels = c("inoc","uninoc"), labels = c("Inoculated","Uninoculated"))) %>%
   summarise(
     n=n(),
     meanFvFm=mean(Fv.Fm, na.rm=TRUE),
@@ -41,6 +44,9 @@ head(flu_sum)
 
 sum_dat <- curve_dat %>%
   group_by(Needle_age, Elev, Micro) %>%
+  mutate(Needle_age = factor(Needle_age, levels = c("new","old"), labels=c("Developing Foliage","Mature Foliage"))) %>%
+  mutate(Elev = factor(Elev, levels = c("low","high"), labels = c("Low Elevation", "High Elevation"))) %>%
+  mutate(Micro = factor(Micro, levels = c("inoc","uninoc"), labels = c("Inoculated","Uninoculated"))) %>%
   summarize(
     n=n(),
     ctmax=mean(ctmax, na.rm=TRUE),
@@ -82,20 +88,22 @@ figure <- ggplot() +
   geom_point(data = flu_sum, aes(x = Measurement, y = meanFvFm),
              color = "black", alpha = 0.7, size = 2) +
   geom_line(data = fit_curves_temp, aes(x = Measurement, y = pred),
-            color = "#B22222", linewidth = 1) +
+            color = "gray34", linewidth = 1) +
   geom_vline(data = ref_lines, aes(xintercept = value, color = metric, linetype = metric),
              linewidth = 0.7) +
   facet_grid(Needle_age ~ Elev + Micro,
-             labeller = labeller(.rows = label_both, .cols = label_both)) +
+             labeller = labeller(label_value)) +
   scale_linetype_manual(values = c("Tcrit" = "dashed", "T15" = "dashed", "T50" = "dashed"),
                         guide = "none") +
-  scale_color_manual(name = "Reference value", values = c("Tcrit" = "orange", "T15" = "steelblue", "T50" = "purple")) +
+  geom_hline(yintercept=0.4, linetype="dashed",color="gray34")+
+  scale_color_manual(name = "Reference value", values = c("Tcrit" = "steelblue", "T15" = "orange", "T50" = "red")) +
   labs(x = "Temperature (°C)", y = expression(F[v]/F[m])) +
   ylim(0,0.83)+
   theme_bw(base_size = 13) +
   theme(
     strip.background = element_rect(fill = "grey90"),
-    legend.position = "bottom"
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
   )
-
-ggsave("temp_response_fig.pdf", figure, path = "~/Masters/Growth_Chamber/results/figures")
+figure
+ggsave("temp_response_fig.png", figure, path = "~/Masters/Growth_Chamber/results/figures")

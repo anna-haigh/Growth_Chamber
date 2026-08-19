@@ -9,7 +9,10 @@ flur2<- read.csv("~/Masters/Growth_chamber/data/Chlorophyll_fluorescence/raw/chl
 
 dur <- flur2 %>%
   filter(Measurement %in% c("0", "3", "4", "5", "6", "7")) %>%
-  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control", "mod", "high"), labels = c("control","moderate","high"))) %>%
+  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control", "mod", "high"), labels = c("Control","Moderate","High"))) %>%
+  mutate(Needle_age = factor(Needle_age, levels = c("new","old"), labels=c("Developing Foliage","Mature Foliage"))) %>%
+  mutate(Elev = factor(Elev, levels = c("low","high"), labels = c("Low Elevation", "High Elevation"))) %>%
+  mutate(Micro = factor(Micro, levels = c("inoc","uninoc"), labels = c("Inoculated","Uninoculated"))) %>%
   filter(Trmt_2 %in% ("heat")) %>%
   mutate(
     time = case_when(
@@ -39,6 +42,9 @@ head(dur_sum)
 
 sum_dat <- dur_dat %>%
   mutate(Prev_trmt = factor(Prev_trmt, levels = c("control", "mod", "high"), labels = c("control","moderate","high"))) %>%
+  mutate(Needle_age = factor(Needle_age, levels = c("new","old"), labels=c("Developing Foliage","Mature Foliage"))) %>%
+  mutate(Elev = factor(Elev, levels = c("low","high"), labels = c("Low Elevation", "High Elevation"))) %>%
+  mutate(Micro = factor(Micro, levels = c("inoc","uninoc"), labels = c("Inoculated","Uninoculated"))) %>%
   group_by(Needle_age, Prev_trmt, Elev, Micro) %>%
   summarize(
     n=n(),
@@ -78,22 +84,23 @@ ref_lines <- sum_dat %>%
 
 figure <- ggplot() +
   geom_point(data = dur_sum, aes(x = time, y = meanFvFm, color = Prev_trmt),
-             alpha = 0.6, size = 2) +
+             size = 2) +
   geom_line(data = fit_curves_dur, aes(x = time, y = pred, color = Prev_trmt),
-            linewidth = 1) +
+            linewidth = 1, alpha = 0.6) +
   facet_grid(Needle_age ~ Elev + Micro,
-             labeller = labeller(.rows = label_both, .cols = label_both)) +
-  scale_color_manual(values = c("control" = "green", "moderate" = "orange", "high" = "red")) +
+             labeller = labeller(label_value)) +
+  scale_color_manual(values = c("Control" = "#21AF29", "Moderate" = "#D4AB7B", "High" = "#A7144C")) +
   labs(x = "Duration at 45°C (hours)", y = expression(F[v]/F[m]),
        color = "Previous Treatment") +
   geom_hline(yintercept = 0.4, lty = "dashed", color = "gray34") + 
   geom_hline(yintercept = 0.8, lty = "dashed", color = "gray70") +
   xlim(0,8) +
   theme_bw(base_size = 13) +
-  theme(strip.background = element_rect(fill = "grey90"), legend.position = "bottom")
+  theme(strip.background = element_rect(fill = "grey90"), legend.position = "bottom",
+        panel.grid.minor=element_blank())
 
 figure
-ggsave("dur_response_fig.pdf", figure, path = "~/Masters/Growth_Chamber/results/figures")
+ggsave("dur_response_fig.png", figure, path = "~/Masters/Growth_Chamber/results/figures")
 
 # No microbe
 dur_sum2 <- dur %>%
@@ -108,7 +115,9 @@ dur_sum2 <- dur %>%
 
 
 sum_dat2 <- dur_dat %>%
-  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control", "mod", "high"), labels = c("control","moderate","high"))) %>%
+  mutate(Prev_trmt = factor(Prev_trmt, levels = c("control", "mod", "high"), labels = c("Control","Moderate","High"))) %>%
+  mutate(Needle_age = factor(Needle_age, levels = c("new","old"), labels=c("Developing Foliage","Mature Foliage"))) %>%
+  mutate(Elev = factor(Elev, levels = c("low","high"), labels = c("Low Elevation", "High Elevation"))) %>%
   group_by(Needle_age, Prev_trmt, Elev) %>%
   summarize(
     n=n(),
@@ -150,22 +159,23 @@ figure2 <- ggplot() +
   geom_point(data = dur_sum2, aes(x = time, y = meanFvFm),
              alpha = 0.6, size = 2) +
   geom_line(data = fit_curves_dur2, aes(x = time, y = pred, color = Prev_trmt),
-            linewidth = 1) +
+            linewidth = 1.1, alpha =0.6) +
   geom_vline(data = ref_lines2,
              aes(xintercept = value, color = Prev_trmt, linetype = metric),
-             linewidth = 0.7, alpha = 0.7) +
+             linewidth = 0.7) +
   facet_grid(Prev_trmt ~ Elev + Needle_age,
-             labeller = labeller(.rows = label_both, .cols = label_both)) +
-  scale_color_manual(values = c("control" = "green", "moderate" = "orange", "high" = "red")) +
+             labeller = labeller(label_value)) +
+  scale_color_manual(values = c("Control" = "#21AF29", "Moderate" = "#D4AB7B", "High" = "#A7144C")) +
   scale_linetype_manual(values = c("Dcrit" = "dashed", "D15" = "dotted", "D50" = "solid")) +
   labs(x = "Duration at 45°C (hours)", y = expression(F[v]/F[m]),
        color = "Previous Treatment", linetype = "Reference value") +
   geom_hline(yintercept = 0.4, lty = "dashed", color = "gray34") + 
   geom_hline(yintercept = 0.8, lty = "dashed", color = "gray70") +
-  xlim(0,9) +
+  xlim(0,8.5) +
   theme_bw(base_size = 13) +
-  theme(strip.background = element_rect(fill = "grey90"), legend.position = "bottom")
+  theme(strip.background = element_rect(fill = "grey90"), legend.position = "bottom",
+        panel.grid.minor=element_blank())
 
 figure2
-ggsave("dur_response_fig2.pdf", figure, path = "~/Masters/Growth_Chamber/results/figures")
+ggsave("dur_response_fig2.png", figure2, path = "~/Masters/Growth_Chamber/results/figures")
 
