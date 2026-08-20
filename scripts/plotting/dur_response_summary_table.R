@@ -87,6 +87,6 @@ ft2
 
 doc2 <- read_docx() %>%
   body_add_flextable(ft2) %>%
-  body_end_section_portrait()
+  body_end_section_landscape()
 
 print(doc2, target = "~/Masters/Growth_Chamber/results/tables/duration_recovery_table.docx")

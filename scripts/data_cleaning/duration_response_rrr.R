@@ -37,7 +37,7 @@ anova(initialmod)
 drrr_df <- dur %>%
   filter(Measurement == 0 | Measurement == 7 | Measurement == "rec1" |Measurement == "rec2" | Measurement == "rec7") %>%
   filter(Trmt_2 == "heat") %>%
-  group_by(Seed_ID, Prev_trmt, Needle_age, Micro, Elev, Genotype, Measurement) %>%
+  group_by(Seed_ID, Seedling_ID, Prev_trmt, Needle_age, Micro, Elev, Genotype, Measurement) %>%
   summarize(mean_FvFm = mean(Fv.Fm, na.rm=TRUE), .groups = "drop") %>%
   pivot_wider(names_from = Measurement, values_from = mean_FvFm, names_prefix = "M")
 

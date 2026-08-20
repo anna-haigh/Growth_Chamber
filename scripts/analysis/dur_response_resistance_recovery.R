@@ -15,7 +15,7 @@ dcontrol_sum <- read.csv("~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence
 # Linear mixed effects modeling
 dresistmodel<-lme(
   Resistance ~ Needle_age * Prev_trmt* Elev,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=drrr_df,
   na.action = na.exclude)
 
@@ -54,7 +54,7 @@ tab_dres <- aov_dres %>%
 
 dd1resil <- lme(
   Day1_Resilience ~ Needle_age *Prev_trmt * Elev,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=drrr_df,
   na.action = na.exclude
 )
@@ -109,11 +109,29 @@ View(contrast(dresisemm, method = "pairwise") %>%
   summary(infer = TRUE) %>%
   as_tibble())
 
+ageresis<- emmeans(dresistmodel, ~ Needle_age)
+ageresis
+contrast(ageresis, method = "pairwise") %>%
+    summary(infer = TRUE) %>%
+    as_tibble()
+
+ptresis<- emmeans(dresistmodel, ~ Prev_trmt)
+ptresis
+contrast(ptresis, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble()
+
 dd1resilemm <- emmeans(dd1resil, ~  Needle_age * Prev_trmt * Elev)
 write.csv(dd1resilemm, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/dur_d1resilemm.csv", row.names=FALSE)
 View(contrast(dd1resilemm, method = "pairwise") %>%
        summary(infer = TRUE) %>%
        as_tibble())
+
+ptresil<- emmeans(dd1resil, ~ Prev_trmt)
+ptresil
+contrast(ptresil, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble()
 
 dd7resilemm <- emmeans(dd7resil, ~  Needle_age * Prev_trmt * Elev)
 write.csv(dd7resilemm, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/dur_d7resilemm.csv", row.names=FALSE)
@@ -127,7 +145,7 @@ head(drec_long)
 
 dres <- log_linear_recovery(
   data = drec_long,
-  group_vars = c("Seed_ID", "Needle_age", "Prev_trmt", "Elev", "Genotype"),
+  group_vars = c("Seed_ID","Seedling_ID", "Needle_age", "Prev_trmt", "Elev", "Genotype"),
   time_var = "time",
   response_var = "Fv.Fm",
   control_target = dcontrol_sum,
@@ -215,7 +233,7 @@ dres$target_tab <- dres$target_tab %>%
 
 dmod_day <- lme(
   days_to_recovery ~ Needle_age * Prev_trmt * Elev,
-  random = ~1 | Seed_ID,
+  random = ~1 | Seedling_ID,
   data = dres$target_tab,
   na.action = na.exclude
 )
@@ -258,7 +276,7 @@ tabd
 
 drec_rate <- lme(
   B ~ Needle_age * Prev_trmt * Elev,
-  random = ~1 | Seed_ID,
+  random = ~1 | Seedling_ID,
   data = dres$fit_tab,
   na.action = na.exclude
 )

@@ -38,7 +38,7 @@ anova(initialmod)
 rrr_df <- flu %>%
   filter(Measurement == 25 | Measurement == 45 | Measurement ==50 | Measurement == "rec1" |Measurement == "rec2" | Measurement == "rec7") %>%
   filter(Treatment == "high") %>%
-  group_by(Seed_ID, Needle_age, Micro, Elev, Genotype, Measurement) %>%
+  group_by(Seed_ID, Seedling_ID, Needle_age, Micro, Elev, Genotype, Measurement) %>%
   summarize(mean_FvFm = mean(Fv.Fm, na.rm=TRUE), .groups = "drop") %>%
   pivot_wider(names_from = Measurement, values_from = mean_FvFm, names_prefix = "M")
 

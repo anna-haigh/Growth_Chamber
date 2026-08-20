@@ -15,7 +15,7 @@ control_sum <- read.csv("~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/
 # Linear mixed effects modeling
 resistmodel<-lme(
   Resistance ~ Needle_age * Elev * Micro,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=rrr_df,
   na.action = na.omit)
 
@@ -55,7 +55,7 @@ tab_res <- aov_res %>%
 
 resist45model<-lme(
   Resistance45 ~ Needle_age * Elev * Micro,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=rrr_df,
   na.action = na.omit)
 
@@ -63,7 +63,7 @@ anova(resist45model)
 
 d1resil <- lme(
   Day1_Resilience ~ Needle_age * Elev * Micro,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=rrr_df,
   na.action = na.omit
 )
@@ -136,12 +136,29 @@ ggplot(resisemm_df, aes(x = Micro, y = emmean, color = Needle_age)) +
 d1resilemm <- emmeans(d1resil, ~  Needle_age * Elev * Micro)
 write.csv(d1resilemm, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/temp_d1resilemm.csv", row.names=FALSE)
 
-
 d1resilemm_df <- as.data.frame(d1resilemm)
 
-View(contrast(d1resilemm, method = "pairwise") %>%
+ageresil <- emmeans(d1resil, ~ Needle_age)
+ageresil
+
+contrast(ageresil, method = "pairwise") %>%
        summary(infer = TRUE) %>%
-       as_tibble())
+       as_tibble()
+
+elevresil <- emmeans(d1resil, ~ Elev)
+elevresil
+
+contrast(elevresil, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble()
+
+agemicroresil <- emmeans(d1resil, ~ Needle_age * Micro)
+agemicroresil
+
+contrast(agemicroresil, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble()
+
 
 ggplot(d1resilemm_df, aes(x = Elev, y = emmean, color = Micro)) +
   geom_point(size = 3, position = position_dodge(0.7)) +
@@ -179,7 +196,7 @@ head(rec_long)
 
 res <- log_linear_recovery(
   data = rec_long,
-  group_vars = c("Seed_ID", "Needle_age", "Micro", "Elev", "Genotype"),
+  group_vars = c("Seed_ID","Seedling_ID", "Needle_age", "Micro", "Elev", "Genotype"),
   time_var = "time",
   response_var = "Fv.Fm",
   control_target = control_sum,
@@ -193,8 +210,7 @@ head(res$fit_curves)
 head(res$target_tab)     
 
 converged_ids <- res$target_tab %>%
-  filter(is.finite(days_to_recovery)) %>%
-  pull(Seed_ID)   
+  filter(is.finite(days_to_recovery))   
 
 fit_curves_final <- res$fit_curves %>%
   filter(Seed_ID %in% converged_ids)
@@ -243,7 +259,7 @@ ggsave("temp_response_recovery.png", rec_figure, path = "~/Masters/Growth_Chambe
 # Recovery metric models
 mod_day <- lme(
   days_to_recovery ~ Needle_age * Micro * Elev,
-  random = ~1 | Seed_ID,
+  random = ~1 | Seedling_ID,
   data = res$target_tab,
   na.action = na.omit
 )
@@ -286,7 +302,7 @@ tab
 
 rec_rate <- lme(
   B ~ Needle_age * Micro * Elev,
-  random = ~1 | Seed_ID,
+  random = ~1 | Seedling_ID,
   data = res$fit_tab,
   na.action = na.omit
 )
@@ -326,7 +342,6 @@ tab2 <- aov_tab2 %>%
 
 tab2
 
-
 # Emmeans analysis
 emm_mod_day <- emmeans(mod_day, ~ Needle_age *  Micro * Elev)
 write.csv(emm_mod_day, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/temp_emm_mod_day.csv", row.names=FALSE)
@@ -334,6 +349,12 @@ write.csv(emm_mod_day, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/p
 View(contrast(emm_mod_day, method = "pairwise") %>%
        summary(infer = TRUE) %>%
        as_tibble())
+
+agemodday<-emmeans(mod_day, ~ Needle_age)
+agemodday
+contrast(agemodday, method = "pairwise") %>%
+    summary(infer = TRUE) %>%
+    as_tibble()
 
 emm_rec_rate <- emmeans(rec_rate, ~ Needle_age * Micro * Elev)
 write.csv(emm_rec_rate, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/temp_emm_rec_rate.csv", row.names=FALSE)

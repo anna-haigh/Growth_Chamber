@@ -18,7 +18,7 @@ mean(dur_dat$R2, na.rm=TRUE)
 # Linear mixed effects models
 dcritmod <- lme(
   Dcrit ~ Prev_trmt*Needle_age*Elev,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=dur_dat,
   na.action = na.exclude
 )
@@ -26,7 +26,7 @@ anova(dcritmod)
 
 d15mod <- lme(
   D15 ~ Prev_trmt*Needle_age*Elev,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=dur_dat,
   na.action = na.exclude
 )
@@ -34,7 +34,7 @@ anova(d15mod)
 
 d50mod <- lme(
   D50 ~ Prev_trmt*Needle_age*Elev,
-  random = ~ 1 | Seed_ID,
+  random = ~ 1 | Seedling_ID,
   data=dur_dat,
   na.action = na.exclude
 )
@@ -172,6 +172,11 @@ emmd50_df <- as.data.frame(emmd50)
 
 write.csv(emmd50_df, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/emmd50.csv", row.names=FALSE)
 
+aged50 <- emmeans(d50mod, ~  Needle_age)
+aged50
+contrast(aged50, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble()
 
 ggplot(emmd50_df, aes(x = Elev, y = emmean, color = Prev_trmt)) +
   geom_point(size = 3, position = position_dodge(0.7)) +
@@ -209,6 +214,11 @@ emmd15_df <- as.data.frame(emmd15)
 
 write.csv(emmd15_df, "~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/emmd15.csv", row.names=FALSE)
 
+aged15 <- emmeans(d15mod, ~  Needle_age)
+aged15
+contrast(aged15, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble()
 
 ggplot(emmd15_df, aes(x = Elev, y = emmean, color = Prev_trmt)) +
   geom_point(size = 3, position = position_dodge(0.7)) +

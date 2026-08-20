@@ -8,7 +8,7 @@ library(emmeans)
 library(nlme)
 
 curve_dat <- read.csv("~/Masters/Growth_Chamber/data/Chlorophyll_fluorescence/processed/response_curve_data.csv")
-
+head(curve_dat)
 
 # Linear mixed effects models
 
@@ -90,7 +90,7 @@ aov_table <- anova(t50mod) %>%
 
 table1 <- aov_table %>%
   kbl(
-    caption = "Linear mixed-effects model ANOVA table for estimated T{50}",
+    caption = "Linear mixed-effects model ANOVA table for estimated T50",
     col.names = c("Fixed Effect", "num df", "den df", "F", "p"),
     align = c("l", "c", "c", "c", "c"),
     booktabs = TRUE   # clean lines for LaTeX/PDF
@@ -222,3 +222,17 @@ ggplot(emmt15_df, aes(x = Elev, y = emmean, color = Micro)) +
        color = "Microbiome") +
   theme_bw() + 
   theme(legend.position = c(.1,.9))
+
+# Pairwise based on significant stats
+etcrit<- emmeans(critmod, ~ Needle_age)
+etcrit
+
+contrast(etcrit, method = "pairwise") %>%
+    summary(infer = TRUE) %>%
+    as_tibble()
+
+et15<- emmeans(t15mod, ~ Needle_age)
+et15
+contrast(et15, method = "pairwise") %>%
+  summary(infer = TRUE) %>%
+  as_tibble()
