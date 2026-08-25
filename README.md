@@ -20,7 +20,7 @@ Contains R code used for modeling temperature and duration response, statistical
 ### scripts
 **analysis**: Scripts containing model fitting, linear mixed effects models, or emmeans comparisons
 
-**data_cleaning**: Scripts used to generate .csv files used for analysis
+**data_cleaning**: Scripts used to process raw data and generate .csv files used for analysis
 
 **functions**: Scripts containing functions used to model temperature and duration response as well as log-linear recovery
 
