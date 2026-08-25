@@ -5,7 +5,7 @@ Contains R code used for modeling temperature and duration response, statistical
 ### data
 **Chlorophyll_conc**: Chlorophyll concentration data (not used in this analysis)
 
-**LI6800N**: Amax data included in supplemental
+**LI6800**: Amax data included in supplemental
 
 **Chlorophyll_fluorescence**: All data used in analysis
 * instrument: Data downloaded directly from Opti-Sciences fluorometer
